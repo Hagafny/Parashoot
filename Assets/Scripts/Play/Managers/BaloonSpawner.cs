@@ -69,7 +69,7 @@ public class BaloonSpawner : MonoBehaviour
     }
     private void MakeBalloonSymbolDisappear(GameObject TheBalloon)
     {
-        SpriteRenderer balloonSpriteRenderer = TheBalloon.transform.FindChild("Symbol").GetComponent<SpriteRenderer>();
+        SpriteRenderer balloonSpriteRenderer = TheBalloon.transform.Find("Symbol").GetComponent<SpriteRenderer>();
         if (balloonSpriteRenderer == null)
         {
             throw new MissingComponentException("Balloon's symbol needs a sprite renderer");

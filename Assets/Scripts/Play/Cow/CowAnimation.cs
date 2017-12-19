@@ -34,7 +34,7 @@ public class CowAnimation : MonoBehaviour
 
     private void HasTakenDamage(GameObject CowBeingHit)
     {
-        Animator enemyAnimator = CowBeingHit.transform.FindChild("CowRenderers/CowHead").GetComponent<Animator>();
+        Animator enemyAnimator = CowBeingHit.transform.Find("CowRenderers/CowHead").GetComponent<Animator>();
         if (enemyAnimator == null)
             throw new MissingComponentException("Enemy cow needs the head animator");
 

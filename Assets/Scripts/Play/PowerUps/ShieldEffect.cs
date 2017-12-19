@@ -58,7 +58,7 @@ public class ShieldEffect : MonoBehaviour
 
     private void DestroyShieldInstance()
     {
-        Transform shield = transform.FindChild(shieldGameObjectName);
+        Transform shield = transform.Find(shieldGameObjectName);
         Destroy(shield.gameObject);
     }
 

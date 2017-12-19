@@ -54,13 +54,13 @@ public class PowerUpSpawner : MonoBehaviour
 
     private void ACowHasShotAPowerUp(GameObject PowerUp, GameObject ShootingCow, GameObject EnemyCow)
     {
-        Animator boxAnimator = PowerUp.transform.FindChild("Container/Box").GetComponent<Animator>();
+        Animator boxAnimator = PowerUp.transform.Find("Container/Box").GetComponent<Animator>();
         boxAnimator.SetTrigger("ContainerDestroyed");
 
         BoxCollider2D boxCollider = PowerUp.transform.GetComponent<BoxCollider2D>();
         boxCollider.enabled = false;
 
-        Transform PowerUpItem = PowerUp.transform.FindChild("PowerUpItem");
+        Transform PowerUpItem = PowerUp.transform.Find("PowerUpItem");
         PowerUpItem.parent = null;
 
         IPowerUp PowerUpBehavior = PowerUpItem.GetComponent(typeof(IPowerUp)) as IPowerUp;

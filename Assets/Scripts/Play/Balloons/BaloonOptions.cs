@@ -22,7 +22,7 @@ public class BaloonOptions {
 
     private void SetSymbolSprite()
     {
-        SpriteRenderer symbolRenderer = Instance.transform.FindChild("Symbol").GetComponent<SpriteRenderer>();
+        SpriteRenderer symbolRenderer = Instance.transform.Find("Symbol").GetComponent<SpriteRenderer>();
         if (symbolRenderer == null)
         {
             throw new MissingComponentException("the symbol component of the balloon is missing as SpriteRenderer");
@@ -48,7 +48,7 @@ public class BaloonOptions {
     }
     private void SetSymbolPosition()
     {
-         Instance.transform.FindChild("Symbol").transform.localPosition = symbolPosition;
+         Instance.transform.Find("Symbol").transform.localPosition = symbolPosition;
     }
 }
 
