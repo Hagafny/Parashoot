@@ -19,7 +19,7 @@ Scripts/
     Cow/        — CowStats, CowHealth, CowShooting, CowAnimation, CowSounds, CowClampRotation, CowAnimationsHolder
     Human/      — HumanMovement, HumanShooting
     Interfaces/ — Movement (abstract), IShooting (interface)
-    Managers/   — GameManager, CowManager, PowerUpSpawner, BaloonSpawner, ScoreManager, CloudSpawner, CloudOptions
+    Managers/   — GameManager, CowManager, PowerUpSpawner, BaloonSpawner, ScoreManager, CloudSpawner, CloudOptions, SlowMotionDirector
     PowerUps/   — IPowerUp, HealthPowerUp, ShieldPowerUp, MadCowPowerUp, ShieldEffect, MadCowEffect, PowerUpCollision, PowerUpSpawner, PowerUpEffect, PowerUpManager
 ```
 

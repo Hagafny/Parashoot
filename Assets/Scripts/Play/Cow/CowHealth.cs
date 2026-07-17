@@ -81,6 +81,16 @@ public class CowHealth : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// True if a single unblocked bullet hit right now would end the round for this cow:
+    /// it's on its last life and is neither shielded nor in its post-hit invincibility window.
+    /// Used by SlowMotionDirector to detect an imminent killing blow.
+    /// </summary>
+    public bool WouldNextHitBeFatal()
+    {
+        return !m_Dead && !m_Shield && !m_Invincibe && m_CurrentLives <= 1;
+    }
+
     private IEnumerator toggleInvicinbility()
     {
         m_Invincibe = true;

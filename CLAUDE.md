@@ -69,6 +69,17 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 - `AIShooting`: always returns true (fires as fast as fireDelay allows).
 - Difficulty scales `movementSpeed`, `rotationSpeed`, `fireDelay` in `CowStats`.
 
+### Slow Motion on the Killing Blow (SlowMotionDirector.cs)
+- Self-bootstrapping (`RuntimeInitializeOnLoadMethod` + `DontDestroyOnLoad`), no per-scene setup.
+- Each frame it scans `Bullet`-tagged objects and `CircleCastAll`s ~0.2s of travel ahead. If the
+  FIRST collider in the path is a `Player` whose `CowHealth.WouldNextHitBeFatal()` is true (last
+  life, not shielded/invincible), it slows `Time.timeScale` to 0.12.
+- Freezes the doomed cow (disables its `Movement` component) so it can't dodge the guaranteed kill.
+- Holds the slow-mo until the target actually dies (or a 1s real-time safety cap), lingers a beat,
+  then eases back to full speed. `Time.fixedDeltaTime` is scaled alongside so physics stays smooth.
+- Restores `Time.timeScale` on `sceneLoaded` and `OnDisable` so the game never gets stuck slowed.
+- Only the killing blow triggers it (per design) — not every life-losing hit.
+
 ### Scoring
 - `GameStats.cs` — static-like persistent class, tracks P1Score / P2Score across rounds.
 - `ScoreManager.cs` — listens to `CowWon` event, updates UI.
@@ -78,6 +89,7 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 | File | Responsibility |
 |---|---|
 | `GameManager.cs` | Central orchestrator — spawns cows, wires events, manages game state machine |
+| `SlowMotionDirector.cs` | Predicts a guaranteed killing bullet ~0.2s ahead and slows time through the impact (self-bootstrapping) |
 | `CowStats.cs` | All tunable values per cow (speed, lives, delays, boundaries) |
 | `CowShooting.cs` | Bullet spawning + all bullet collision events |
 | `BulletMovement.cs` | Bullet physics, collision outcomes |
