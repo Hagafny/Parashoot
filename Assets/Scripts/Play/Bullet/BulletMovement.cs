@@ -20,7 +20,7 @@ public class BulletMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         //Add speed to the bullet.
-        rb.velocity = transform.right * bulletSpeed * -1; //I seem to need the -1 to avoid the cows hitting themselves.
+        rb.linearVelocity = transform.right * bulletSpeed * -1; //I seem to need the -1 to avoid the cows hitting themselves.
         bulletRegularMass = rb.mass;
 
     //    transform.rotation = Quaternion.Euler(0f, 0f, transform.rotation.eulerAngles.y);

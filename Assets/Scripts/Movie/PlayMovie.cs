@@ -1,17 +1,27 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Video;
+
 [RequireComponent (typeof(AudioSource))]
+[RequireComponent (typeof(VideoPlayer))]
 public class PlayMovie : MonoBehaviour {
 
-    public MovieTexture movie;
+    public VideoClip movie;
     public AudioSource audioSrc;
 
+    private VideoPlayer videoPlayer;
     private AudioSource gameMusicAudioSrc;
     private bool initialMusicMute;
+
     void Awake()
     {
+        videoPlayer = GetComponent<VideoPlayer>();
+        videoPlayer.clip = movie;
+        videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+        videoPlayer.SetTargetAudioSource(0, audioSrc);
+
         GameObject gameMusic = GameObject.FindGameObjectWithTag("Game Music");
         if (gameMusic != null)
         {
@@ -20,11 +30,10 @@ public class PlayMovie : MonoBehaviour {
             gameMusicAudioSrc.mute = true;
         }
     }
+
     void Start()
     {
-        audioSrc.clip = movie.audioClip;
-        movie.Play();
-        audioSrc.Play();
+        videoPlayer.Play();
         StartCoroutine(WaitForMovieEnd());
     }
 
@@ -32,17 +41,16 @@ public class PlayMovie : MonoBehaviour {
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            movie.Pause();
+            videoPlayer.Pause();
             StartCoroutine(WaitForMovieEnd());
         }
     }
 
     IEnumerator WaitForMovieEnd()
     {
-        while (movie.isPlaying) // while the movie is playing
+        while (videoPlayer.isPlaying)
             yield return new WaitForEndOfFrame();
 
-        // After movie is not playing / has stopped.
         onMovieEnded();
     }
 

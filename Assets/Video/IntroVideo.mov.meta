@@ -1,11 +1,18 @@
 fileFormatVersion: 2
 guid: b1b3000a37a629a4fb93b10eb0044ab0
-timeCreated: 1452116106
-licenseType: Free
-MovieImporter:
-  serializedVersion: 1
-  quality: .5
-  linearTexture: 0
+VideoClipImporter:
+  externalObjects: {}
+  serializedVersion: 3
+  frameRange: 0
+  startFrame: -1
+  endFrame: -1
+  colorSpace: 0
+  deinterlace: 0
+  encodeAlpha: 0
+  flipVertical: 0
+  flipHorizontal: 0
+  importAudio: 1
+  targetSettings: {}
   userData: 
   assetBundleName: 
   assetBundleVariant: 

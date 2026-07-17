@@ -37,7 +37,7 @@ public class BalloonStrainer : MonoBehaviour, IBalloon
 
         Quaternion bulletQuaternion = bullet.transform.rotation;
         int angleFactor = bullet.transform.rotation.eulerAngles.y >= 180 ? 1 : -1;
-        int velocityFactor = bullet.GetComponent<Rigidbody2D>().velocity.x > 0 ? 1 : -1;
+        int velocityFactor = bullet.GetComponent<Rigidbody2D>().linearVelocity.x > 0 ? 1 : -1;
         SpawnBullet(bulletPosition1, bulletQuaternion * Quaternion.Euler(0, 0, -offset * angleFactor * velocityFactor));
         SpawnBullet(bulletPosition2, bulletQuaternion * Quaternion.Euler(0, 0, offset * angleFactor * velocityFactor));
 

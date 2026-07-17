@@ -119,7 +119,7 @@ public class CowShooting : MonoBehaviour
         {
             bulletMovementScript.ricochet = !bulletMovementScript.ricochet;
 
-            Vector2 v = bullet.GetComponent<Rigidbody2D>().velocity;
+            Vector2 v = bullet.GetComponent<Rigidbody2D>().linearVelocity;
             float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
             bullet.transform.rotation = Quaternion.AngleAxis(180 + angle, Vector3.forward);
         }
