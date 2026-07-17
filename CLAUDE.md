@@ -58,6 +58,12 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 - Spawns a parachute box from the top every 15s.
 - Bullet hits box → box destroyed → item detaches and flies toward the **shooter** (Good) or **enemy** (Bad) via `MoveTowards.cs`.
 - Types: **Health** (+1 life), **Shield** (5s immunity), **MadCow** (5s inverted controls).
+- While MadCow is active, `CowAnimation` smoothly cross-fades the head between its normal face and
+  the "crazy" face: the base head stays normal while an overlay `SpriteRenderer` (drawn just above
+  the head) fades the crazy face in/out on a cosine curve shaped by smootherstep (so it dwells at
+  full-normal and full-mad and passes quickly through the mid-blend), easing back and forth
+  `MadCycles` (3) times across `CowStats.madCowTime`. Done in `LateUpdate` so it overrides the static mad clip; it
+  captures the normal face at `Start` and the crazy face from the animator at runtime — no asset wiring.
 
 ### Balloon System (BaloonSpawner.cs)
 - Balloons float up from the bottom every 8s.
