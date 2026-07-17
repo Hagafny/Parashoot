@@ -57,21 +57,20 @@ Keyboard keeps using the Legacy Input Manager, unchanged.
 | Menu: select | South (✕ / A) |
 | Menu / match: back | East (○ / B) |
 
-## STATUS: not yet verified end-to-end
-The 89 compile errors are fixed (was the package version). Controller input has **not yet been
-confirmed working in play mode**. When the user connected a pad, the cow didn't move — most
-likely because the **editor still needs a full restart** to activate the "Both" input backends.
+## STATUS: verified working in play mode ✅
+Gameplay + fire confirmed on a DualSense (USB). Getting there required, in order:
+1. Bumping the package to 1.19.0 (fixed the 89 compile errors).
+2. A **full editor restart** to activate the "Both" input backends.
+3. Setting **Edit → Project Settings → Input System Package → Play Mode Input Behavior =
+   "All Device Input Always Goes To Game View"**. This is the key editor gotcha: with the
+   default, gamepad input is withheld from Play mode unless the Game view has focus, so the
+   cow read all-zeros while the Console was focused. NOTE: this is a **per-user editor
+   setting**, not committed to the repo — and it only matters in the editor. In a built
+   player there is no "game view focus", so controllers work regardless.
 
-## Next steps for whoever picks this up
-1. **Fully restart the Unity editor** (not just stop/play) after the `activeInputHandler` change —
-   required to enable the new input backends. Confirm Edit → Project Settings → Player → Active
-   Input Handling = **Both**.
-2. **Window → Analysis → Input Debugger** → confirm the controller appears under Devices.
-   - Not listed → detection/backend issue (restart, re-pair the pad).
-   - Listed → hardware fine; if the cow still won't move, debug the assignment in
-     `ControllerInput.GetGamepad` / player-number wiring.
-3. Verify the controlled cow is set to **Human** (AI cows don't get the Human input scripts).
-4. Once gameplay works, test menu navigation + Circle-as-back across Instructions/Credits/Options.
+## Next steps / ideas
+- Test menu navigation + Circle-as-back across Instructions/Credits/Options with a pad.
+- Consider a proper pause menu (Circle currently exits a match instantly).
 
 ## Known caveats / open questions
 - Circle in the Play scene exits a match instantly (mirrors ESC, no confirmation) — a proper

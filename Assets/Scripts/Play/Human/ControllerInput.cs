@@ -18,11 +18,21 @@ public static class ControllerInput
     /// </summary>
     public static Gamepad GetGamepad(int playerNumber)
     {
-        int index = playerNumber - 1;
         var pads = Gamepad.all;
+        if (pads.Count == 0)
+            return null;
+
+        // Only one controller connected: let it drive whichever human is asking, so a
+        // single pad works no matter which player slot (P1 or P2) is set to Human.
+        if (pads.Count == 1)
+            return pads[0];
+
+        int index = playerNumber - 1;
         if (index >= 0 && index < pads.Count)
             return pads[index];
-        return null;
+
+        // More players than pads: share the last connected pad rather than returning null.
+        return pads[pads.Count - 1];
     }
 
     /// <summary>
