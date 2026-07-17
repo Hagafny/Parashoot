@@ -46,16 +46,24 @@ public static class ControllerInput
     }
 
     /// <summary>
-    /// Combined rotation input from left stick X, right stick X and D-pad (-1..1).
-    /// Either stick can aim the gun.
+    /// Combined horizontal movement from left stick and D-pad (-1..1).
+    /// </summary>
+    public static float GetHorizontal(int playerNumber)
+    {
+        Gamepad pad = GetGamepad(playerNumber);
+        if (pad == null) return 0f;
+        return Mathf.Clamp(pad.leftStick.x.ReadValue() + pad.dpad.x.ReadValue(), -1f, 1f);
+    }
+
+    /// <summary>
+    /// Rotation input from the right stick X only (-1..1). Left stick and D-pad now drive
+    /// movement, so aiming is a twin-stick-style right-stick-only control.
     /// </summary>
     public static float GetRotation(int playerNumber)
     {
         Gamepad pad = GetGamepad(playerNumber);
         if (pad == null) return 0f;
-        return Mathf.Clamp(
-            pad.leftStick.x.ReadValue() + pad.rightStick.x.ReadValue() + pad.dpad.x.ReadValue(),
-            -1f, 1f);
+        return Mathf.Clamp(pad.rightStick.x.ReadValue(), -1f, 1f);
     }
 
     /// <summary>

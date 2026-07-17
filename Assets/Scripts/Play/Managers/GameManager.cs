@@ -104,6 +104,21 @@ public class GameManager : MonoBehaviour
             m_Cows[i].m_Shooting.ShooterHitBalloon += ShooterHitBalloon;
             m_Cows[i].m_Health.CowDead += CowDead;
         }
+
+        IgnorePlayerCollisions();
+    }
+
+    /// <summary>
+    /// Now that movement is free in X, the two cows can occupy the same space. Ignore collisions
+    /// between their colliders so they pass through each other instead of physically blocking.
+    /// </summary>
+    private void IgnorePlayerCollisions()
+    {
+        Collider2D[] a = m_Cows[0].m_Instance.GetComponentsInChildren<Collider2D>();
+        Collider2D[] b = m_Cows[1].m_Instance.GetComponentsInChildren<Collider2D>();
+        foreach (var ca in a)
+            foreach (var cb in b)
+                Physics2D.IgnoreCollision(ca, cb, true);
     }
 
     /// <summary>

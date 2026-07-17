@@ -15,6 +15,9 @@ public class CowStats : MonoBehaviour  {
     public float rotationSpeed = 10f; //Rotation speed  
     public float yMaxBounadry = 9.2f; // The cow can only go this high
     public float yMinBounadry = -12f; // The cow can only go this low
+
+    public float xMinBoundary; // Derived at runtime from the EndingPoint1/EndingPoint2 scene anchors
+    public float xMaxBoundary;
     public bool invertedMovement = false; // inverted movement/ai rotation - for the madCow
 
     [Range(0, 180)]
