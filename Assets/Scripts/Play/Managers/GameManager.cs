@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using System;
 using System.Text;
 using UnityEngine.SceneManagement;
@@ -67,7 +68,11 @@ public class GameManager : MonoBehaviour
     }
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // ESC (keyboard) or the East button (Circle / B) exits the match back to the main menu.
+        Gamepad pad = Gamepad.current;
+        bool cancelPressed = pad != null && pad.buttonEast.wasPressedThisFrame;
+
+        if (Input.GetKeyDown(KeyCode.Escape) || cancelPressed)
         {
             if (GameEnded != null)
                 GameEnded(true);

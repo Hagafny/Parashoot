@@ -16,6 +16,6 @@ public class HumanShooting : MonoBehaviour, IShooting {
     public bool HasShot()
     {
         string fireButton = string.Concat("Fire", stats.playerNumber);
-        return Input.GetButtonDown(fireButton);
+        return Input.GetButtonDown(fireButton) || ControllerInput.FirePressedThisFrame(stats.playerNumber);
     }
 }

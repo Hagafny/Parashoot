@@ -1,7 +1,7 @@
 # Parashoot — Claude Context
 
 ## What this is
-A 2-player competitive 2D shooter built in Unity 6 (6000.0.54f1). Originally created in 2016 (Unity 2017), upgraded to Unity 6. Two cows on opposite sides of a vertical arena shoot at each other. First to lose all lives loses. Supports Human vs Human or Human vs AI (4 difficulty levels).
+A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally created in 2016 (Unity 2017), upgraded to Unity 6. Two cows on opposite sides of a vertical arena shoot at each other. First to lose all lives loses. Supports Human vs Human or Human vs AI (4 difficulty levels).
 
 ## Scene Flow
 1. **Intro video** (scene 0) — `PlayMovie.cs` plays a VideoClip, ESC skips. Loads scene 1 when done.
@@ -102,8 +102,18 @@ A 2-player competitive 2D shooter built in Unity 6 (6000.0.54f1). Originally cre
 - Options screen: type `insane` → forces AIInsane difficulty
 - Play scene: type `moo` → BalloonOverload (spawn interval drops to 0.04s for 3.5s)
 
+## Controller Support
+- All gamepad types supported via the **New Input System** package (`com.unity.inputsystem`),
+  running alongside Legacy Input (`activeInputHandler: 2` / "Both").
+- Xbox, PS4 (DualShock4), PS5 (DualSense), Switch Pro and generic HID pads all normalize
+  to the same `Gamepad` layout — see `ControllerInput.cs`.
+- P1 = first connected pad, P2 = second. Left stick moves, either stick X aims,
+  South button / right trigger / right bumper fires. Keyboard still works simultaneously.
+- Menus are controller-navigable too via `MenuNavigation.cs` (self-bootstrapping, no
+  per-scene setup): D-pad/stick to move, South = select, East (Circle/B) = back.
+  East in the Play scene exits the match to the menu (handled in `GameManager`, mirrors ESC).
+
 ## Planned Features
-- Xbox controller support (Legacy Input Manager axes, no code rewrite needed)
 - Screen shake on hit
 - Hit-stop (3-4 frame freeze on impact)
 - Power-up timer HUD
@@ -114,7 +124,7 @@ A 2-player competitive 2D shooter built in Unity 6 (6000.0.54f1). Originally cre
 - AI bullet dodging
 
 ## Unity-Specific Notes
-- Project uses **Legacy Input Manager** — not the New Input System package
+- Input runs in **"Both"** mode: keyboard uses the **Legacy Input Manager**, controllers use the **New Input System** package (see Controller Support above)
 - `InputManager.asset` is binary — edit only via Unity Editor UI
 - All assets use 4:3 aspect ratio (enforced by `CameraRatio.cs`)
 - `DontDestroyOnLoad` objects: Game Music, GameOptions

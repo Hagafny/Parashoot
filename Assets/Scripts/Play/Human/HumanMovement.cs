@@ -43,13 +43,16 @@ public class HumanMovement : Movement
         float spawnPointX = m_CowEndingPoint.position.x;
 
         //Calcaulte Vertical movement based on our axis. Multiply by speed and deltatime to add speed and smoothness respectively.
-        float VerticalMovementAxis = Input.GetAxis(GetPlayerAxis("Vertical"));
+        //Keyboard (legacy axis) and gamepad (new Input System) are summed so either can drive the cow.
+        float VerticalMovementAxis = Mathf.Clamp(
+            Input.GetAxis(GetPlayerAxis("Vertical")) + ControllerInput.GetVertical(stats.playerNumber), -1f, 1f);
         //  float VerticalMovementAxis = movementController.GetVerticalMovement();
         float VerticalMovement = VerticalMovementAxis * stats.movementSpeed * Time.deltaTime * InvertedFactor;
 
         Vector2 pos = m_Rigidbody.position;
 
-        float RotationMovementAxis = Input.GetAxis(GetPlayerAxis("Rotation"));
+        float RotationMovementAxis = Mathf.Clamp(
+            Input.GetAxis(GetPlayerAxis("Rotation")) + ControllerInput.GetRotation(stats.playerNumber), -1f, 1f);
         float RotationMovement = RotationMovementAxis * stats.rotationSpeed * Time.deltaTime * 15 * InvertedFactor;
         transform.Rotate(Vector3.forward * RotationMovement);
 
@@ -60,7 +63,7 @@ public class HumanMovement : Movement
 
         //Need to raise this action for the Flame animation. CowAnimation will listen to it.
         if (GoingUp != null)
-            GoingUp(IsGoingUp());
+            GoingUp(IsGoingUp(VerticalMovementAxis));
     }
 
     /// <summary>
@@ -73,8 +76,11 @@ public class HumanMovement : Movement
         return AxisName + stats.playerNumber;
     }
 
-    private bool IsGoingUp()
+    private bool IsGoingUp(float verticalAxis)
     {
-        return (!stats.invertedMovement && Input.GetButton(GetPlayerAxis("Up"))) || (stats.invertedMovement          && Input.GetButton(GetPlayerAxis("Down")));
+        // Effective direction after accounting for the mad-cow inverted controls.
+        bool axisUp = verticalAxis * InvertedFactor > 0.1f;
+        bool buttonUp = (!stats.invertedMovement && Input.GetButton(GetPlayerAxis("Up"))) || (stats.invertedMovement && Input.GetButton(GetPlayerAxis("Down")));
+        return axisUp || buttonUp;
     }
 }
