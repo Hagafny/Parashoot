@@ -20,12 +20,25 @@ public class CowStats : MonoBehaviour  {
     [Range(0, 180)]
     public float rotationAngleLimit = 45f; //The max angles the cow can rotate to on either side
 
-    [Range(0.0f, 2f)]
+    [Range(0.0f, 4f)]
     public float fireDelay = 0.75f; // Delay of each bullet shot
 
     public float shieldTime = 5f; // Seconds for shield to be active
 
     public float madCowTime = 5f; // Seconds for mad cow to be active
 
-
+    /// <summary>
+    /// Pulls the pacing values from GameplayTuning, overwriting whatever the Cow prefab has
+    /// serialized. This project uses BINARY serialization, so the prefab's saved values would
+    /// otherwise win over the field initializers above and no tuning change would take effect.
+    ///
+    /// Runs in Awake so it lands during Instantiate — i.e. BEFORE GameManager.SetAiLevel applies
+    /// its difficulty multipliers on top. Order matters: baseline first, then difficulty.
+    /// </summary>
+    void Awake()
+    {
+        movementSpeed = GameplayTuning.MovementSpeed;
+        rotationSpeed = GameplayTuning.RotationSpeed;
+        fireDelay = GameplayTuning.FireDelay;
+    }
 }

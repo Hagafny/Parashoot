@@ -12,10 +12,59 @@ public class PowerUpSpawner : MonoBehaviour
     public Action<GameObject, GameObject> PowerUpUsed;
     void Start()
     {
+        // Tuned cadence wins over the scene object's serialized value (binary scene — see
+        // GameplayTuning). Set before the coroutine starts so the very first wait uses it.
+        powerUpDeliveryTime = GameplayTuning.PowerUpInterval;
+
         // Start the first delivery.
         StartCoroutine(PowerUpPickup());
 
         RegisterToEvents();
+    }
+
+    /// <summary>
+    /// Scales the crate's authored gravity to control how fast it descends. Multiplies rather than
+    /// replaces gravityScale, for the same reason as the balloons: the prefab value is in a binary
+    /// asset and can't be read from source, so scaling preserves its intent and changes only the rate.
+    ///
+    /// Currently scaled DOWN — it's a parachuted crate, so it should drift rather than plummet,
+    /// and a slow descent is what gives both players time to decide whether to contest it.
+    ///
+    /// BoxExplosion is unaffected — it assigns -ParachuteNegativeGravity outright once the box
+    /// is shot away, so the freed parachute still flies up exactly as before.
+    /// </summary>
+    private void ScaleFall(GameObject crate)
+    {
+        Rigidbody2D crateRB = crate.GetComponent<Rigidbody2D>();
+        if (crateRB == null)
+            return; // Gravity stays as the prefab authored it.
+
+        crateRB.gravityScale *= GameplayTuning.CrateFallMultiplier;
+
+        GiveOffscreenLifetime(crate);
+    }
+
+    /// <summary>
+    /// Same treatment as the balloons: swap any fixed self-destruct timer for one that measures
+    /// when the crate actually leaves the view, so retuning CrateFallMultiplier can never again
+    /// make crates vanish mid-screen.
+    ///
+    /// Disabling the component before its Start runs is what prevents the Destroy from being
+    /// scheduled — an already-scheduled Destroy(obj, t) cannot be cancelled.
+    /// </summary>
+    private void GiveOffscreenLifetime(GameObject spawned)
+    {
+        // Root only — children use SelfDestructBySeconds for effect cleanup (the box explosion),
+        // and that timing should be left alone.
+        SelfDestructBySeconds fixedTimer = spawned.GetComponent<SelfDestructBySeconds>();
+        if (fixedTimer != null)
+        {
+            fixedTimer.enabled = false;
+            Destroy(fixedTimer);
+        }
+
+        OffscreenLifetime lifetime = spawned.AddComponent<OffscreenLifetime>();
+        lifetime.GraceSeconds = GameplayTuning.OffscreenGraceSeconds;
     }
 
     void RegisterToEvents()
@@ -39,6 +88,8 @@ public class PowerUpSpawner : MonoBehaviour
             int pickupIndex = UnityEngine.Random.Range(0, PowerUps.Length);
             PowerUps[pickupIndex].Instance = Instantiate(PowerUpContainer, dropPos, Quaternion.identity) as GameObject;
             PowerUps[pickupIndex].Setup();
+
+            ScaleFall(PowerUps[pickupIndex].Instance);
 
             PowerUpCollision powerUpCollisionScript = PowerUps[pickupIndex].Instance.GetComponentInChildren<PowerUpCollision>();
 

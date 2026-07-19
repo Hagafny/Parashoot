@@ -10,6 +10,11 @@ public class AIMovement : Movement
     CowStats stats;
     private IEnumerator<Transform> _currentPoint;
 
+    // Mirrors the human's acceleration ramp so the AI can't out-manoeuvre a player who now has
+    // inertia. Without this the AI would reverse direction instantly and dodge shots the player
+    // could never dodge.
+    private float _currentSpeed;
+
     public void Start()
     {
         stats = GetComponent<CowStats>();
@@ -28,7 +33,13 @@ public class AIMovement : Movement
         if (_currentPoint == null || _currentPoint.Current == null)
             return;
 
-        transform.position = Vector3.MoveTowards(transform.position, _currentPoint.Current.position, Time.deltaTime * stats.movementSpeed);
+        // Ramp up to the tuned speed rather than starting at full pelt, matching HumanMovement.
+        // A waypoint switch (SwitchMovementSide) therefore costs the AI the same turnaround time
+        // the player pays, which is what keeps a well-led shot punishing.
+        float accelRate = stats.movementSpeed / Mathf.Max(GameplayTuning.AccelerationTime, 0.0001f);
+        _currentSpeed = Mathf.MoveTowards(_currentSpeed, stats.movementSpeed, accelRate * Time.deltaTime);
+
+        transform.position = Vector3.MoveTowards(transform.position, _currentPoint.Current.position, Time.deltaTime * _currentSpeed);
 
         var distanceSquared = (transform.position - _currentPoint.Current.position).sqrMagnitude;
 
@@ -37,7 +48,15 @@ public class AIMovement : Movement
             GoingUp(IsGoingUp());
 
         if (distanceSquared < 0.1 )
-            _currentPoint.MoveNext();
+            SwitchToNextPoint();
+    }
+
+    /// Advances the patrol waypoint and drops the speed ramp back to zero, so reversing costs the
+    /// AI a real turnaround instead of an instant flip.
+    private void SwitchToNextPoint()
+    {
+        _currentPoint.MoveNext();
+        _currentSpeed = 0f;
     }
 
     private IEnumerator<Transform> GetPathEnumerator()
@@ -67,8 +86,10 @@ public class AIMovement : Movement
     {
         while (true)
         {
-            yield return new WaitForSeconds(Random.Range(1f, 2f));
-            _currentPoint.MoveNext();
+            // Widened from 1-2s: with the slower pacing, flipping direction every second read as
+            // jitter rather than as a decision the player could observe and shoot against.
+            yield return new WaitForSeconds(Random.Range(1.8f, 3.4f));
+            SwitchToNextPoint();
         }
     }
 

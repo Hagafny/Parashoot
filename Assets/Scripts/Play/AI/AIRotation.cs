@@ -31,7 +31,12 @@ public class AIRotation : MonoBehaviour
         if (stats.playerNumber == 2)
             q = Quaternion.Euler(q.eulerAngles.x, 180, -q.eulerAngles.z * InvertedFactor);
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, q, Time.deltaTime * stats.rotationSpeed * 15);
+        // Was a Slerp whose factor (deltaTime * rotationSpeed * 15) exceeded 1 every frame, so the
+        // AI snapped onto the player instantly and never had to lead a shot. RotateTowards makes
+        // rotationSpeed mean the same thing it means for a human — degrees per second — so the AI
+        // has to commit to an aim just like the player does, and can be baited off-target.
+        float maxDegreesThisFrame = stats.rotationSpeed * 15f * Time.deltaTime;
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, q, maxDegreesThisFrame);
 
     }
 }

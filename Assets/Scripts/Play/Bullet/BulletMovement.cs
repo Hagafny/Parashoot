@@ -3,6 +3,9 @@ using System.Collections;
 using System;
 public class BulletMovement : MonoBehaviour
 {
+    // Authoritative value lives in GameplayTuning.BulletSpeed (applied in Start). This field is
+    // kept only so the prefab still shows a sensible number in the Inspector — the binary Bullet
+    // prefab's serialized value would otherwise override any change made here.
     public float bulletSpeed = 24f; // Speed of the bullet
     public Action<GameObject> BulletHitPlayer;
     public Action<GameObject> BulletHitPowerUp;
@@ -19,6 +22,12 @@ public class BulletMovement : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        // Take the tuned speed rather than the prefab's serialized value (binary prefab, see
+        // GameplayTuning). Bullets spawned by the Strainer balloon come through here too, so
+        // split bullets stay in sync automatically.
+        bulletSpeed = GameplayTuning.BulletSpeed;
+
         //Add speed to the bullet.
         rb.linearVelocity = transform.right * bulletSpeed * -1; //I seem to need the -1 to avoid the cows hitting themselves.
         bulletRegularMass = rb.mass;

@@ -14,6 +14,10 @@ public class BaloonSpawner : MonoBehaviour
 
     void Start()
     {
+        // Tuned cadence wins over the scene object's serialized value (binary scene — see
+        // GameplayTuning). Set before the coroutine starts so the very first wait uses it.
+        baloonDeliveryTime = GameplayTuning.BalloonInterval;
+
         // Start the first delivery.
         StartCoroutine(BaloonSpawn());
         RegisterToEvents();
@@ -36,11 +40,61 @@ public class BaloonSpawner : MonoBehaviour
             // ... instantiate the base cloud at the drop position.
             Baloons[baloonIndex].Instance = Instantiate(BaseBaloon, dropPos, Quaternion.identity) as GameObject;
             Baloons[baloonIndex].Setup();
+
+            ScaleRise(Baloons[baloonIndex].Instance);
         }
 
 
     }
 
+
+    /// <summary>
+    /// Scales the balloon's authored buoyancy to control how fast it climbs. Multiplies rather
+    /// than replaces gravityScale: the prefab's value lives in a binary asset and can't be read
+    /// from source, so scaling keeps whatever it intended (including the sign, which is what makes
+    /// the balloon rise) and only changes the rate.
+    ///
+    /// Currently scaled DOWN — at the prefab's authored gravity a balloon accelerates past bullet
+    /// speed before it clears the screen, which reads as physically wrong and pulls the eye off
+    /// the actual threat.
+    ///
+    /// Popping is unaffected — ACowHasShotABalloon assigns gravityScale = 20 outright.
+    /// </summary>
+    private void ScaleRise(GameObject balloon)
+    {
+        Rigidbody2D balloonRB = balloon.GetComponent<Rigidbody2D>();
+        if (balloonRB == null)
+            throw new MissingComponentException("Ballon needs a Rigidbody");
+
+        balloonRB.gravityScale *= GameplayTuning.BalloonRiseMultiplier;
+
+        GiveOffscreenLifetime(balloon);
+    }
+
+    /// <summary>
+    /// Replaces any fixed self-destruct timer with one that measures when the object actually
+    /// leaves the view.
+    ///
+    /// The prefab's SelfDestructBySeconds was authored against the prefab's original (fast) rise.
+    /// Slowing the balloon down meant that timer expired while the balloon was still mid-screen,
+    /// so balloons vanished in front of the player. Disabling it before its Start runs prevents
+    /// the Destroy call from ever being scheduled — Unity skips Start on a disabled component, and
+    /// a Destroy(obj, t) already scheduled cannot be cancelled.
+    /// </summary>
+    private void GiveOffscreenLifetime(GameObject spawned)
+    {
+        // Root only. Children may legitimately use SelfDestructBySeconds for effect cleanup
+        // (pop animations, explosions), and those should keep their own timing.
+        SelfDestructBySeconds fixedTimer = spawned.GetComponent<SelfDestructBySeconds>();
+        if (fixedTimer != null)
+        {
+            fixedTimer.enabled = false;
+            Destroy(fixedTimer);
+        }
+
+        OffscreenLifetime lifetime = spawned.AddComponent<OffscreenLifetime>();
+        lifetime.GraceSeconds = GameplayTuning.OffscreenGraceSeconds;
+    }
 
     void RegisterToEvents()
     {

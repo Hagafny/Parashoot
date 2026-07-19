@@ -347,33 +347,16 @@ public class GameManager : MonoBehaviour
         CowType aiLevel = gameOptions.cowOptions[1].type;
         CowStats stats = aiCow.GetComponent<CowStats>();
 
-        switch (aiLevel)
-        {
-            case CowType.AIEasy:
-                stats.movementSpeed -= 7;
-                stats.rotationSpeed -= 7;
-                stats.fireDelay *= 2f;
+        // These used to be ADDITIVE offsets (movementSpeed -= 7, rotationSpeed -= 7). That was
+        // silently coupled to the old base values of 12 and 10: against the retuned base speeds
+        // in GameplayTuning, AIEasy would land on a movement speed of 0 (a frozen cow) and a
+        // negative rotation speed. Multipliers scale with whatever baseline is set, so the
+        // difficulty curve survives future tuning passes.
+        GameplayTuning.AiScale scale = GameplayTuning.ScaleFor(aiLevel);
 
-                break;
-            case CowType.AINormal:
-                stats.movementSpeed -= 2;
-                stats.rotationSpeed -= 2;
-                stats.fireDelay *= 1.5f;
-                break;
-            case CowType.AIHard:
-                stats.movementSpeed += 2;
-                stats.rotationSpeed += 2;
-                stats.fireDelay *= 0.75f;
-                break;
-            case CowType.AIInsane:
-                stats.movementSpeed += 5;
-                stats.rotationSpeed += 5;
-                stats.fireDelay *= 0.5f;
-                break;
-            case CowType.Human:
-            default:
-                break;
-        }
+        stats.movementSpeed *= scale.Movement;
+        stats.rotationSpeed *= scale.Rotation;
+        stats.fireDelay *= scale.FireDelay;
     }
 
     private Transform createAIBoundryTransform(string gameObjectName, float xBoundry, float yBoundry)

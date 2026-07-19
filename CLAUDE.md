@@ -19,6 +19,9 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 
 - Movement is **vertical only** — X position is locked to spawn column
 - Y clamped: -12 to 9.2. Rotation clamped: ±45 degrees.
+- Movement **accelerates and decelerates** (`GameplayTuning.AccelerationTime` /
+  `DecelerationTime`) rather than snapping to full speed — reversing pays a braking cost first,
+  so a direction change is a commitment. Applies to both `HumanMovement` and `AIMovement`.
 - Input uses Unity **Legacy Input Manager** with named axes: `Vertical1`, `Rotation1`, `Fire1` etc.
 - `InputManager.asset` is in **binary format** — edit via Unity UI (Edit → Project Settings → Input Manager), not as a text file.
 
@@ -43,9 +46,45 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 
 `GameManager` wires all events at startup. Nothing talks directly to another system — everything goes through events.
 
+### Gameplay Pacing (GameplayTuning.cs)
+- **All pacing values live in `GameplayTuning.cs`** — fire delay, bullet speed, movement speed,
+  acceleration, rotation rate, invincibility, spawn cadences, AI difficulty multipliers.
+- **Why a central file:** the project uses **binary serialization**, so serialized values on the
+  binary Cow/Bullet prefabs and Play scene *override* C# field initializers. Editing
+  `CowStats.fireDelay = 0.75f` in source changes nothing at runtime. Values are therefore
+  **assigned at runtime**: `CowStats.Awake()`, `BulletMovement.Start()`, both spawners' `Start()`.
+- **Keystone ratio:** cows are locked to their spawn columns, so every shot crosses the full arena
+  and bullet travel time is a constant. `shotsInFlight = travelTime / fireDelay` must stay **≤ 1.0**
+  so a cow cannot fire again before its previous shot resolves. That is what makes a miss cost
+  something and stops the shoot-shoot-shoot loop.
+- `PacingDiagnostics` (self-bootstrapping) logs the **measured** arena width and resulting ratios on
+  round start — arena width lives in the binary scene and can't be read from source.
+- **Balloon rise / crate fall** are driven by Rigidbody `gravityScale` authored on the binary
+  prefabs, so there is no absolute speed readable from source. `BaloonSpawner.ScaleRise` and
+  `PowerUpSpawner.ScaleFall` **multiply** that value at spawn (`BalloonRiseMultiplier`,
+  `CrateFallMultiplier`) — scaled down, because at the prefab's authored gravity a balloon
+  accelerates past bullet speed before clearing the screen.
+- **These multipliers are not linear.** The motion accelerates, so speed goes with the *square
+  root* of the multiplier: to halve crossing speed, use a **quarter** of the multiplier.
+- Both remain accelerating rather than constant-speed — slowest at the spawn edge, fastest on exit.
+  If that ramp itself becomes a problem, the fix is assigning a constant velocity at spawn rather
+  than a smaller multiplier.
+- **Lifetime is measured, not hardcoded** (`OffscreenLifetime.cs`). A fixed `SelfDestructBySeconds`
+  is authored against one particular speed, so retuning the multipliers used to make balloons
+  vanish in mid-screen. Both spawners now strip the prefab's root timer and attach
+  `OffscreenLifetime`, which destroys the object `OffscreenGraceSeconds` after it actually clears
+  the camera. Retuning speed can no longer strand or orphan one.
+  - The grace window is deliberately non-zero: shooting a balloon just after it leaves the top of
+    the screen is a valid play, so it stays alive and shootable for a beat.
+  - Objects spawn *offscreen* (y = ±19), so the component waits until it has been seen once before
+    arming the timer, plus a `MaxLifetimeSeconds` backstop for anything never visible.
+  - Only the **root** timer is stripped; children keep theirs for effect cleanup (pop, box explosion).
+- To retune: edit `GameplayTuning.cs`, re-enter Play mode, read the `[Pacing]` console lines.
+
 ### Health System
 - Start: 3 lives. Max: 5. One damage per bullet hit.
-- 0.2s invincibility after each hit (prevents multi-hit in same frame).
+- Invincibility after each hit (`GameplayTuning.InvincibilitySeconds`) — long enough to be a
+  reposition beat, not just a same-frame multi-hit guard.
 - Shield (`ShieldEffect.cs`) blocks all damage for 5s, increases Rigidbody2D mass by 100.
 - `LifeBar.cs` displays 5 heart slots per player.
 
@@ -70,10 +109,14 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 - Types: **Magnifying Glass** (enlarges bullet mass/scale), **Strainer** (splits into 2 bullets at ±20°, inheriting all event handlers).
 
 ### AI System
-- `AIMovement`: patrols between top/bottom waypoints, randomly switches direction every 1-2s.
-- `AIRotation`: always aims at P1 using Atan2.
+- `AIMovement`: patrols between top/bottom waypoints, randomly switches direction every 1.8-3.4s.
+  Accelerates from rest and resets its ramp on each waypoint switch, mirroring the human's inertia.
+- `AIRotation`: aims at P1 using Atan2, rate-capped via `Quaternion.RotateTowards` at
+  `rotationSpeed * 15` deg/s. (Was a `Slerp` whose factor exceeded 1 every frame, i.e. instant aim.)
 - `AIShooting`: always returns true (fires as fast as fireDelay allows).
-- Difficulty scales `movementSpeed`, `rotationSpeed`, `fireDelay` in `CowStats`.
+- Difficulty scales `movementSpeed`, `rotationSpeed`, `fireDelay` by **multipliers** from
+  `GameplayTuning.ScaleFor()`. These were additive offsets (`-= 7`) hard-coupled to the old base
+  values — against the retuned baselines AIEasy would have ended up frozen with negative rotation.
 
 ### Slow Motion on the Killing Blow (SlowMotionDirector.cs)
 - Self-bootstrapping (`RuntimeInitializeOnLoadMethod` + `DontDestroyOnLoad`), no per-scene setup.
@@ -96,7 +139,8 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 |---|---|
 | `GameManager.cs` | Central orchestrator — spawns cows, wires events, manages game state machine |
 | `SlowMotionDirector.cs` | Predicts a guaranteed killing bullet ~0.2s ahead and slows time through the impact (self-bootstrapping) |
-| `CowStats.cs` | All tunable values per cow (speed, lives, delays, boundaries) |
+| `GameplayTuning.cs` | **Single source of truth for pacing** — applied at runtime because binary prefabs override field initializers. Also `PacingDiagnostics` |
+| `CowStats.cs` | Per-cow values; `Awake()` pulls pacing from `GameplayTuning` |
 | `CowShooting.cs` | Bullet spawning + all bullet collision events |
 | `BulletMovement.cs` | Bullet physics, collision outcomes |
 | `PowerUpSpawner.cs` | Spawns boxes, opens them, routes power-up to correct cow |
@@ -144,5 +188,10 @@ A 2-player competitive 2D shooter built in Unity 6.2 (6000.5.4f1). Originally cr
 ## Unity-Specific Notes
 - Input runs in **"Both"** mode: keyboard uses the **Legacy Input Manager**, controllers use the **New Input System** package (see Controller Support above)
 - `InputManager.asset` is binary — edit only via Unity Editor UI
+- **The whole project uses binary serialization** (`EditorSettings.asset`): every `.unity` scene and
+  `.prefab` is a binary blob, not YAML. Consequences: they can't be diffed, grepped, or edited
+  outside the Editor, and **serialized values override C# field initializers** — changing a default
+  in a script does *not* change the value the game runs with. Gameplay values that need to be
+  tunable from source must be assigned at runtime (see `GameplayTuning.cs`)
 - All assets use 4:3 aspect ratio (enforced by `CameraRatio.cs`)
 - `DontDestroyOnLoad` objects: Game Music, GameOptions

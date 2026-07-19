@@ -72,15 +72,36 @@ Submit = South button. Keyboard text entry into name `InputField`s still works b
 input stays active in "Both" mode. `EscToReturn.cs` also gained East support but is currently
 unused (not attached to any scene).
 
-## CowStats.cs — Tunable Values
-All per-cow balance values live here. Key fields:
+## GameplayTuning.cs — Pacing Values (start here)
+**All pacing/feel values live in `Play/Managers/GameplayTuning.cs`.** Edit that one file and
+re-enter Play mode; nothing else needs touching.
+
+Why it exists: the project uses **binary serialization**, so serialized values on the binary Cow /
+Bullet prefabs and Play scene override C# field initializers. Editing `CowStats.fireDelay = 0.75f`
+in source has **no runtime effect**. So the values are assigned at runtime by:
+- `CowStats.Awake()` → movementSpeed, rotationSpeed, fireDelay (runs during `Instantiate`, i.e.
+  *before* `GameManager.SetAiLevel` layers difficulty on top — order matters)
+- `BulletMovement.Start()` → bulletSpeed (Strainer-split bullets inherit it automatically)
+- `BaloonSpawner.Start()` / `PowerUpSpawner.Start()` → spawn cadences
+
+The ratio that governs the whole feel: cows are locked to their spawn columns, so every shot
+crosses the full arena and travel time is a constant. Keep
+`shotsInFlight = travelTime / fireDelay` **≤ 1.0** — above 1.0 a cow can fire again before its
+previous shot lands, which removes any cost from missing and produces bullet spam.
+
+`PacingDiagnostics` (same self-bootstrapping pattern as `SlowMotionDirector`) logs the **measured**
+arena width and the resulting ratios each round, and warns if `shotsInFlight` exceeds 1.0. Arena
+width lives in the binary scene, so this is the only way to read it from outside the Editor.
+
+## CowStats.cs — Per-Cow Values
 - `startingLives` = 3, `maximumeLives` = 5
-- `movementSpeed` = 12, `rotationSpeed` = 10
-- `fireDelay` = 0.75s
 - `shieldTime` = 5s, `madCowTime` = 5s
 - `yMaxBounadry` = 9.2, `yMinBounadry` = -12
 - `rotationAngleLimit` = 45 degrees
-- AI difficulty modifies these values at runtime in `GameManager.cs`
+- `movementSpeed` / `rotationSpeed` / `fireDelay` — **overwritten in `Awake()` from `GameplayTuning`**
+- AI difficulty applies **multipliers** on top (`GameplayTuning.ScaleFor()`, used by `GameManager`).
+  These were additive offsets (`movementSpeed -= 7`) coupled to the old base of 12; with any
+  retuned baseline that produced a frozen AIEasy cow and negative rotation speed.
 
 ## Players Enum (Players.cs)
 ```csharp

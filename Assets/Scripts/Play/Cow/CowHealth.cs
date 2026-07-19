@@ -93,8 +93,12 @@ public class CowHealth : MonoBehaviour
 
     private IEnumerator toggleInvicinbility()
     {
+        // Was a flat 0.2s whose job was purely to stop several bullets landing on the same frame.
+        // The fire cadence in GameplayTuning now keeps roughly one bullet per cow in flight, so
+        // that job is already done and this window can serve the player instead: a beat to
+        // reposition after taking a hit rather than being immediately re-threatened.
         m_Invincibe = true;
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(GameplayTuning.InvincibilitySeconds);
         m_Invincibe = false;
     }
 
